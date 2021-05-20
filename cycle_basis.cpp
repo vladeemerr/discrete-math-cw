@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 #include <cstdint>
 
 enum { // NOTE: Available bit-field flags
@@ -66,11 +67,14 @@ static void solve(int32_t a)
    }
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+   // NOTE: Open file stream from auxiliary program
+   std::ifstream in(argv[1]);
+
    // NOTE: Read number of vertices
    int32_t vertices;
-   std::cin >> vertices;
+   in >> vertices;
 
    // NOTE: Build default graph matrix 
    _g.assign(vertices, std::vector<std::pair<int32_t, bool>>(vertices, {0, false}));
@@ -79,21 +83,46 @@ int main(void)
    // NOTE: Read graph matrix
    for (int32_t i = 0; i < vertices; ++i) {
       for (int32_t j = 0; j < vertices; ++j) {
-         std::cin >> _g[i][j].first;
+         in >> _g[i][j].first;
       }
    }
+
+   // NOTE: Reading is done
+   in.close();
 
    // NOTE: Start algorithm
    for (int32_t x = 0; x < vertices; ++x)
       if (_flags[x] & VERTEX_FLAG_new)
          solve(x);
 
-   // NOTE: Print all cycles
-   for (int32_t i = 0; i < _cycles.size(); ++i) {
-      for (int32_t j = 0; j < _cycles[i].size(); ++j)
-         std::cout << _cycles[i][j] << ' ';
-      std::cout << '\n';
+   // NOTE: Pass formatted output to auxiliary program
+   std::fstream out;
+   out.open(argv[1]);
+   out.clear();
+   out << vertices << '\n';
+   for (int32_t i = 0; i < vertices; ++i) {
+      for (int32_t j = 0; j < vertices; ++j) {
+         out << _g[i][j].first;
+         if (j != vertices)
+            out << ' ';
+      }
+      if (i != vertices)
+         out << '\n';
    }
+
+   out << "Text:\n";
+   for (int32_t i = 0; i < _cycles.size(); ++i) {
+      for (int32_t j = 0; j < _cycles[i].size(); ++j) {
+         out << _cycles[i][j];
+         if (j != _cycles[i].size())
+            out << ' ';
+      }
+      if (i != _cycles.size())
+         out << '\n';
+   }
+
+   // NOTE: Writing is done
+   out.close();
    
    return 0;
 }
